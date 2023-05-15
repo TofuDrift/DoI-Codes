@@ -1,0 +1,53 @@
+import pygame
+from pygame.locals import *
+from main_game import main_game
+
+pygame.init()
+
+window_width = 500
+window_height = 500
+window = pygame.display.set_mode((window_width, window_height))
+pygame.display.set_caption("Menu")
+
+font = pygame.font.Font(None, 50)
+title_text = font.render("Dungeon of Infinity", True, (0, 0, 0))
+title_rect = title_text.get_rect(center=(window_width / 2, window_height * 0.25))
+
+# Button class definition
+class Button:
+    def __init__(self, x, y, width, height, text, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.color = color
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+        font = pygame.font.Font(None, 32)
+        text = font.render(self.text, True, (255, 255, 255))
+        text_rect = text.get_rect(center=self.rect.center)
+        screen.blit(text, text_rect)
+
+    def is_clicked(self, pos):
+        return self.rect.collidepoint(pos)
+
+play = Button(200, 200, 100, 50, "Play", (0, 255, 0))
+
+active = True
+
+while active:
+    window.fill((255, 255, 255))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            active = False
+        elif event.type == MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left mouse button
+                mouse_pos = pygame.mouse.get_pos()
+                if play.is_clicked(mouse_pos):
+                    main_game()
+
+    window.blit(title_text, title_rect)
+    play.draw(window)
+    pygame.display.update()
+
+pygame.quit()
