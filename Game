@@ -1,0 +1,124 @@
+import pygame
+
+def main_game():
+
+    pygame.init()
+
+    window_width = 500
+    window_height = 500
+    window = pygame.display.set_mode((window_width, window_height))
+    pygame.display.set_caption("Dungeon")
+
+    x = 250
+    y = 250
+    vel = 5
+    gravity = 5
+    jump_height = 10
+    is_jumping = False
+    jump_count = 1
+
+    jump_cooldown = 0
+
+    clock = pygame.time.Clock()
+    running = True
+
+    walk_frames_right = []  # Walking animation frames for facing right
+    walk_frames_left = []   # Walking animation frames for facing left
+    current_frame = 0       # Index of the current frame
+    animation_speed = 0.2   # Speed of the animation
+    delay_time = 0
+
+    # Load the walking animation frames for facing right
+    for i in range(1, 9):
+        frame = pygame.image.load(f"WalkR-{i}.png")
+        frame = pygame.transform.scale(frame, (100, 100))
+        walk_frames_right.append(frame)
+
+    # Load the walking animation frames for facing left
+    for i in range(1, 9):
+        frame = pygame.image.load(f"WalkL-{i}.png")
+        frame = pygame.transform.scale(frame, (100, 100))
+        walk_frames_left.append(frame)
+
+    idle_frame_right = pygame.image.load("Idle-Right.png")
+    idle_frame_right = pygame.transform.scale(idle_frame_right, (100, 100))
+
+    idle_frame_left = pygame.image.load("Idle-Left.png")
+    idle_frame_left = pygame.transform.scale(idle_frame_left, (100, 100))
+
+    player = idle_frame_right  # Set the initial player image
+
+    animation_cooldown = 0  # Cooldown time after moving halfway through the animation
+    duration_cooldown = 10  # Cooldown duration in frames
+
+    while running:
+        window.fill((255, 255, 255))
+        player_position = int(x), int(y)
+        window.blit(player, player_position)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                return
+
+        keys = pygame.key.get_pressed()
+
+        # Jumping logic
+        if keys[pygame.K_SPACE] and not is_jumping:
+            is_jumping = True
+            jump_count = 1
+
+        if is_jumping:
+            y -= jump_height * 2
+            jump_count -= 1
+
+            if jump_count < 0:
+                y += jump_height
+                is_jumping = False
+
+        if jump_cooldown > 0:
+            jump_cooldown -= 1
+
+
+        # Apply gravity
+        if not is_jumping and y < window_height - player.get_height():
+            y += gravity
+
+        # Boundary checks
+        if y < 0:
+            y = 0
+        elif y > window_height - player.get_height():
+            y = window_height - player.get_height()
+
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+            if x > 0:
+                x -= vel
+            player = walk_frames_left[current_frame]  # Set the player image for facing left
+        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            if x < window_width - player.get_width():
+                x += vel
+            player = walk_frames_right[current_frame]  # Set the player image for facing right
+        else:
+            if player in walk_frames_right:
+                player = idle_frame_right  # Set the player image to idle frame facing right
+            elif player in walk_frames_left:
+                player = idle_frame_left  # Set the player image to idle frame facing left
+
+        # Update the animation
+        if keys[pygame.K_w] or keys[pygame.K_UP] or keys[pygame.K_a] or keys[pygame.K_LEFT] or keys[pygame.K_d] or keys[
+            pygame.K_RIGHT]:
+            if player in walk_frames_right:
+                if delay_time >= animation_speed:  # Check if enough time has passed based on animation speed
+                    current_frame = (current_frame + 1) % len(walk_frames_right)
+                    delay_time = 0  # Reset the delay time
+                else:
+                    delay_time += clock.get_time()  # Accumulate the elapsed time
+            elif player in walk_frames_left:
+                if delay_time >= animation_speed:  # Check if enough time has passed based on animation speed
+                    current_frame = (current_frame + 1) % len(walk_frames_left)
+                    delay_time = 0  # Reset the delay time
+                else:
+                    delay_time += clock.get_time()  # Accumulate the elapsed time
+
+        pygame.display.update()
+        clock.tick(60)
